@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tetrics_game/values.dart';
+import 'package:tetrics_game/widgets/values.dart';
 
 class Piece {
   Tetramino type;
@@ -190,7 +190,7 @@ class Piece {
               positions[1] - rowLength,
               positions[1],
               positions[1] + rowLength,
-              positions[1] + colLength + 1,
+              positions[1] + colLength  ,
             ];
             if (piecePositionIsValid(newPositions)) {
               positions = newPositions;

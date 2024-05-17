@@ -1,27 +1,37 @@
 import 'dart:async';
 import 'dart:math';
-import 'package:neon_widgets/neon_widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:tetrics_game/piece.dart';
-import 'package:tetrics_game/pixel.dart';
-import 'package:tetrics_game/values.dart';
+import 'package:tetrics_game/widgets/GreyContainerWidget.dart';
+import 'package:tetrics_game/widgets/piece.dart';
+import 'package:tetrics_game/widgets/pixel.dart';
+import 'package:tetrics_game/score.dart';
+import 'package:tetrics_game/widgets/values.dart';
+
+num highScore = 0;
 
 class BoardScreen extends StatefulWidget {
-  const BoardScreen({super.key});
+  final bool isFirst;
+
+  const BoardScreen({super.key, this.isFirst = false});
 
   @override
   State<BoardScreen> createState() => _BoardScreenState();
 }
 
 class _BoardScreenState extends State<BoardScreen> {
-  Piece currentPiece = Piece(type: Tetramino.T);
+  Piece currentPiece = Piece(type: Tetramino.I);
   bool isGameOver = false;
-  int curentScore = 0;
+  bool isStart = false;
+
+  num curentScore = 0;
 
   @override
   void initState() {
     super.initState();
-    startGame();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      isStart = widget.isFirst;
+      setState(() {});
+    });
   }
 
   void moveLeft() {
@@ -38,6 +48,44 @@ class _BoardScreenState extends State<BoardScreen> {
         currentPiece.movePiece(Directions.right);
       });
     }
+  }
+
+  int _seconds = 120;
+  late Timer _timer;
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_seconds > 0) {
+          _seconds--;
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+                builder: (BuildContext context) => ScorePage(
+                      currentScore: curentScore,
+                      highScore: highScore,
+                      function: () {
+                        if (curentScore > highScore) {
+                          highScore = curentScore;
+                        }
+                        startGame();
+                        resetGame();
+                        isStart = false;
+                      },
+                    )),
+          );
+
+          _timer.cancel();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
   }
 
   bool gameOver() {
@@ -71,23 +119,14 @@ class _BoardScreenState extends State<BoardScreen> {
           gameBoard[r] = List.from(gameBoard[r - 1]);
         }
         gameBoard[0] = List.generate(row, (index) => null);
-        curentScore++;
+        curentScore = curentScore + 10;
       }
     }
-  }
-
-  bool GameOver() {
-    for (int col = 0; col < rowLength; col++) {
-      if (gameBoard[0][col] != null) {
-        return true;
-      }
-    }
-    return false;
   }
 
   void startGame() {
     currentPiece.initializePiece();
-    Duration framerate = const Duration(milliseconds: 1000);
+    Duration framerate = const Duration(milliseconds: 300);
 
     gameLoop(framerate);
   }
@@ -96,97 +135,32 @@ class _BoardScreenState extends State<BoardScreen> {
     Timer.periodic(frameRate, (timer) {
       setState(() {
         clearLines();
+
         checklanding();
         if (isGameOver == true) {
           timer.cancel();
 
-          gameOverMessage();
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(
+                builder: (BuildContext context) => ScorePage(
+                      currentScore: curentScore,
+                      highScore: highScore,
+                      function: () {
+                        if (curentScore > highScore) {
+                          highScore = curentScore;
+                        }
+                        resetGame();
+                        startGame();
+                        isStart = false;
+                      },
+                    )),
+          );
         }
 
         currentPiece.movePiece(Directions.down);
       });
     });
-  }
-
-  void gameOverMessage() {
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            actionsAlignment: MainAxisAlignment.center,
-            backgroundColor: const Color.fromARGB(129, 34, 32, 32),
-            title: Center(
-                child: Container(
-              decoration: BoxDecoration(
-                  color: const Color.fromARGB(73, 0, 0, 0),
-                  borderRadius: BorderRadius.circular(15)),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                child: NeonText(
-                  text: 'GAME OVER',
-                  textColor: Colors.deepOrange,
-                  spreadColor: Colors.orange,
-                  textSize: 30,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            )),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
-                  child: Image.asset(
-                    'assets/game.png',
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                const Text(
-                  'TOP SCORE',
-                  style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900),
-                ),
-                Text(
-                  '$curentScore',
-                  style: const TextStyle(
-                      fontSize: 100,
-                      height: 0,
-                      color: Color.fromARGB(255, 206, 255, 43),
-                      fontWeight: FontWeight.w900),
-                ),
-              ],
-            ),
-            actions: [
-              InkWell(
-                onTap: () {
-                  resetGame();
-                  Navigator.pop(context);
-                },
-                child: NeonContainer(
-                  borderRadius: BorderRadius.circular(10),
-                  spreadColor: Colors.deepPurple,
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 10, horizontal: 30),
-                    child: FlickerNeonText(
-                      text: "RESTART",
-                      textColor: Colors.white,
-                      flickerTimeInMilliSeconds: 1800,
-                      spreadColor: Colors.red,
-                      fontWeight: FontWeight.w500,
-                      blurRadius: 20,
-                      textSize: 20,
-                    ),
-                  ),
-                ),
-              )
-            ],
-          );
-        });
   }
 
   void resetGame() {
@@ -200,12 +174,14 @@ class _BoardScreenState extends State<BoardScreen> {
 
     isGameOver = false;
     curentScore = 0;
+    _seconds = 120;
 
     checkNewPiece();
-    startGame();
   }
 
-  bool checkCollision(Directions direction) {
+  bool checkCollision(
+    Directions direction,
+  ) {
     for (int i = 0; i < currentPiece.positions.length; i++) {
       int row = (currentPiece.positions[i] / rowLength).floor();
       int col = currentPiece.positions[i] % rowLength;
@@ -233,7 +209,9 @@ class _BoardScreenState extends State<BoardScreen> {
   }
 
   void checklanding() {
-    if (checkCollision(Directions.down)) {
+    if (checkCollision(
+      Directions.down,
+    )) {
       for (int i = 0; i < currentPiece.positions.length; i++) {
         int row = (currentPiece.positions[i] / rowLength).floor();
         int col = currentPiece.positions[i] % rowLength;
@@ -259,80 +237,104 @@ class _BoardScreenState extends State<BoardScreen> {
     }
   }
 
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    String minutes = twoDigits(duration.inMinutes.remainder(60));
+    String seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      //canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) {
-          return;
-        }
-
-        resetGame();
-      },
+    Duration duration = Duration(seconds: _seconds);
+    String formattedTime = _formatDuration(duration);
+    return SafeArea(
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color.fromARGB(255, 11, 6, 18),
-          centerTitle: true,
-          title: const Text(
-            'Tetrics Game',
-          ),
-          titleTextStyle: const TextStyle(
-              color: Colors.white, fontSize: 25, fontWeight: FontWeight.w500),
-        ),
         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-        body: Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: Column(
-            children: [
-              Expanded(
-                flex: 12,
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+        body: Container(
+          decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                Color.fromARGB(255, 92, 0, 251),
+                Color.fromARGB(255, 198, 165, 255),
+                Color.fromARGB(255, 92, 0, 251),
+                Color.fromARGB(255, 54, 37, 81)
+              ])),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GreyContainerWidget(
+                      title: 'High Score:',
+                      color: const Color.fromARGB(255, 30, 150, 46),
+                      subTitle: highScore.toString(),
+                    ),
+                    GreyContainerWidget(
+                        subTitle: curentScore.toString(),
+                        color: Colors.black,
+                        title: 'Score:'),
+                    GreyContainerWidget(
+                        subTitle: formattedTime,
+                        color: Colors.black,
+                        title: 'Timer:')
+                  ],
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(15.0),
                   child: Container(
-                    height: MediaQuery.of(context).size.height * 0.74,
+                    height: MediaQuery.of(context).size.height * 0.72,
                     width: double.infinity,
-                    // padding: EdgeInsets.zero,
                     decoration: BoxDecoration(
-                        color: const Color.fromARGB(255, 38, 16, 72),
+                        borderRadius: BorderRadius.circular(20),
+                        color: const Color.fromARGB(255, 2, 2, 2),
                         border: Border.all(
                           width: 0.5,
                           color: const Color.fromARGB(255, 130, 47, 255),
                         )),
-                    child: GridView.builder(
-                        shrinkWrap: true,
-                        padding: EdgeInsets.zero,
-                        itemCount: rowLength * colLength,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisSpacing: 0, crossAxisCount: rowLength),
-                        itemBuilder: (context, index) {
-                          int row = (index / rowLength).floor();
-                          int col = index % rowLength;
+                    child: Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: GridView.builder(
+                          shrinkWrap: true,
+                          padding: EdgeInsets.zero,
+                          itemCount: rowLength * colLength,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisSpacing: 0,
+                                  crossAxisCount: rowLength),
+                          itemBuilder: (context, index) {
+                            int row = (index / rowLength).floor();
+                            int col = index % rowLength;
 
-                          if (currentPiece.positions.contains(index)) {
-                            return Pixel(
-                                isPixel: true,
-                                child: '',
-                                pixelColor: currentPiece.color);
-                          } else if (gameBoard[row][col] != null) {
-                            final Tetramino? tetraType = gameBoard[row][col];
-                            return Pixel(
-                                isPixel: true,
-                                child: '',
-                                pixelColor: tetraColor[tetraType]);
-                          } else {
-                            return Pixel(
-                                isPixel: false,
-                                child: '',
-                                pixelColor: const Color.fromARGB(255, 2, 2, 2));
-                          }
-                        }),
+                            if (currentPiece.positions.contains(index)) {
+                              return Pixel(
+                                  isPixel: true,
+                                  child: '',
+                                  pixelColor: currentPiece.color);
+                            } else if (gameBoard[row][col] != null) {
+                              final Tetramino? tetraType = gameBoard[row][col];
+                              return Pixel(
+                                  isPixel: true,
+                                  child: '',
+                                  pixelColor: tetraColor[tetraType]);
+                            } else {
+                              return Pixel(
+                                  isPixel: false,
+                                  child: '',
+                                  pixelColor:
+                                      const Color.fromARGB(255, 2, 2, 2));
+                            }
+                          }),
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Padding(
+                Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
                   child: Row(
@@ -346,6 +348,7 @@ class _BoardScreenState extends State<BoardScreen> {
                         },
                         child: Image.asset(
                           'assets/icons1.png',
+                          height: 60,
                           //height: 70,
                         ),
                       ),
@@ -357,7 +360,7 @@ class _BoardScreenState extends State<BoardScreen> {
                         },
                         child: Image.asset(
                           'assets/icons3.png',
-                          // height: 70,
+                          height: 60,
                         ),
                       ),
                       InkWell(
@@ -368,31 +371,69 @@ class _BoardScreenState extends State<BoardScreen> {
                         },
                         child: Image.asset(
                           'assets/icons2.png',
-                          //height: 70,
+                          height: 60,
                         ),
                       ),
-                      NeonContainer(
-                        borderRadius: BorderRadius.circular(15),
-                        borderWidth: 5,
-                        borderColor: const Color.fromARGB(255, 222, 215, 231),
-                        containerColor: const Color.fromARGB(255, 96, 0, 240),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 8),
-                          child: Text(
-                            'Score : $curentScore',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600),
+                      InkWell(
+                        onTap: () {
+                          if (isStart) {
+                            isStart = false;
+                            print('Chitti macha');
+                            _startTimer();
+                            startGame();
+                          } else {
+                            resetGame();
+                          }
+                        },
+                        child: Container(
+                          width: 100,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            gradient: isStart
+                                ? const LinearGradient(
+                                    colors: [
+                                        Color.fromARGB(255, 255, 179, 0),
+                                        Color.fromARGB(255, 246, 181, 4),
+                                        Color.fromARGB(255, 231, 216, 180),
+                                      ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight)
+                                : const LinearGradient(
+                                    colors: [
+                                        Color.fromARGB(255, 192, 24, 91),
+                                        Color.fromARGB(255, 198, 22, 92),
+                                        Color.fromARGB(255, 236, 113, 162),
+                                      ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color.fromARGB(255, 3, 1, 1),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset: Offset(4, 4),
+                              )
+                            ],
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 0, vertical: 10),
+                            child: Text(
+                              isStart ? 'START' : 'RESTART',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                  color: isStart ? Colors.black : Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700),
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              )
-            ],
+                )
+              ],
+            ),
           ),
         ),
       ),

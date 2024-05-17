@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -26,7 +28,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Flutter Demo'),
+        title: const Text('Flutter Demo'),
       ),
       body: ListView.builder(
         itemCount: items.length,
@@ -34,7 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
           return ListTile(
             title: Text(items[index]),
             trailing: IconButton(
-              icon: Icon(Icons.delete),
+              icon: const Icon(Icons.delete),
               onPressed: () {
                 removeItem(index);
               },
@@ -45,7 +47,7 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         onPressed: addItem,
         tooltip: 'Add Item',
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }
