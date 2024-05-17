@@ -252,6 +252,7 @@ class _BoardScreenState extends State<BoardScreen> {
       child: Scaffold(
         backgroundColor: const Color.fromARGB(255, 0, 0, 0),
         body: Container(
+          height: MediaQuery.of(context).size.height * 0.98,
           decoration: const BoxDecoration(
               gradient: LinearGradient(
                   begin: Alignment.topRight,
@@ -288,7 +289,7 @@ class _BoardScreenState extends State<BoardScreen> {
                 Padding(
                   padding: const EdgeInsets.all(15.0),
                   child: Container(
-                    height: MediaQuery.of(context).size.height * 0.72,
+                    height: MediaQuery.of(context).size.height * 0.70,
                     width: double.infinity,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
@@ -298,7 +299,8 @@ class _BoardScreenState extends State<BoardScreen> {
                           color: const Color.fromARGB(255, 130, 47, 255),
                         )),
                     child: Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 0, horizontal: 20),
                       child: GridView.builder(
                           shrinkWrap: true,
                           padding: EdgeInsets.zero,
