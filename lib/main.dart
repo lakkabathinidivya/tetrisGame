@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:tetrics_game/dashboard.dart';
-import 'package:tetrics_game/homePage.dart';
+import 'package:tetrics_game/welcome.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,12 +12,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const Homepage(),
-    );
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: const WelcomeScreen());
   }
 }

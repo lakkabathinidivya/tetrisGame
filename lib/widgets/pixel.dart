@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
@@ -16,11 +15,11 @@ class Pixel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color.fromARGB(210, 58, 48, 70),
+      color: Colors.transparent,
       child: Container(
         margin: const EdgeInsets.all(0.5),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(3),
           color: pixelColor,
           gradient: isPixel
               ? LinearGradient(
